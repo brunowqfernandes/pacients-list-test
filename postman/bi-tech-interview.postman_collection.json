@@ -1,0 +1,215 @@
+{
+  "info": {
+    "name": "Bi Tech Interview - API de Pacientes",
+    "description": "Coleção de requisições para testar a API REST de gerenciamento de pacientes. Ajuste baseUrl caso a API esteja em outro endereço. Fluxo sugerido: cadastrar, consultar, atualizar, excluir, listar excluídos e restaurar.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000/api",
+      "type": "string"
+    },
+    {
+      "key": "patientId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Pacientes",
+      "item": [
+        {
+          "name": "Listar pacientes ativos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/patients",
+            "description": "Retorna os pacientes ativos. Registros excluídos logicamente não devem aparecer."
+          }
+        },
+        {
+          "name": "Cadastrar paciente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Maria da Silva\",\n  \"cpf\": \"12345678901\",\n  \"rg\": \"123456789\",\n  \"birth_date\": \"1990-05-20\",\n  \"biological_sex\": \"F\",\n  \"cellphone\": \"11999999999\",\n  \"email\": \"maria@example.com\",\n  \"description\": \"Paciente de demonstração\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/patients",
+            "description": "Cadastra um paciente. Use um CPF ainda não cadastrado. Se a resposta retornar o ID do paciente, copie-o para a variável patientId."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('A API respondeu com sucesso ou validação de negócio', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 422]);",
+                  "});",
+                  "",
+                  "if ([200, 201].includes(pm.response.code)) {",
+                  "    let body = {};",
+                  "    try { body = pm.response.json(); } catch (e) {}",
+                  "    const id = body.id || (body.data && body.data.id) || (body.patient && body.patient.id);",
+                  "    if (id) pm.collectionVariables.set('patientId', String(id));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar paciente por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/patients/{{patientId}}",
+            "description": "Consulta os dados de um paciente ativo. Depende da variável patientId."
+          }
+        },
+        {
+          "name": "Atualizar paciente",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Maria da Silva Atualizada\",\n  \"cpf\": \"12345678901\",\n  \"rg\": \"123456789\",\n  \"birth_date\": \"1990-05-20\",\n  \"biological_sex\": \"F\",\n  \"cellphone\": \"11988887777\",\n  \"email\": \"maria.atualizada@example.com\",\n  \"description\": \"Dados atualizados pelo Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/patients/{{patientId}}",
+            "description": "Atualiza um paciente existente. O CPF deve ser enviado sem alteração, pois é imutável na edição."
+          }
+        },
+        {
+          "name": "Excluir paciente (Soft Delete)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/patients/{{patientId}}",
+            "description": "Exclui logicamente o paciente. O registro permanece no banco e deixa de aparecer na listagem de ativos."
+          }
+        },
+        {
+          "name": "Listar pacientes excluídos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/patients/trashed",
+            "description": "Retorna os pacientes excluídos logicamente."
+          }
+        },
+        {
+          "name": "Restaurar paciente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/patients/{{patientId}}/restore",
+            "description": "Restaura um paciente excluído. Após a restauração, ele deve voltar a aparecer na listagem de pacientes ativos."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Validações",
+      "item": [
+        {
+          "name": "Cadastrar paciente com campos obrigatórios ausentes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\",\n  \"cpf\": \"\",\n  \"rg\": \"\",\n  \"birth_date\": \"\",\n  \"biological_sex\": \"\",\n  \"cellphone\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/patients",
+            "description": "Deve retornar erro de validação HTTP 422 e informar os campos obrigatórios."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Retorna HTTP 422 para dados inválidos', function () {",
+                  "    pm.response.to.have.status(422);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
